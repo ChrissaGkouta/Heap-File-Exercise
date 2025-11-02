@@ -84,7 +84,7 @@ int HeapFile_InsertRecord(int file_handle, HeapFileHeader *hp_info, const Record
     hp_info->freespace = true;
     hp_info->lastblock++;
 
-    void** data = BF_Block_GetData(block);
+    void* data = BF_Block_GetData(block);
 
     HeapFileIterator  block_info;
     block_info.recordcount = 0;
@@ -102,7 +102,7 @@ int HeapFile_InsertRecord(int file_handle, HeapFileHeader *hp_info, const Record
   //an exw free space
     else{
     BF_GetBlock(file_handle , hp_info->lastblock , block);
-    void** data = BF_Block_GetData(block);
+    void* data = BF_Block_GetData(block);
     HeapFileIterator block_info;
 
     memcpy(&block_info , data, sizeof(block_info));
@@ -139,7 +139,7 @@ HeapFileIterator HeapFile_CreateIterator(    int file_handle, HeapFileHeader* he
   for(int i = 1; i <= header_info->lastblock; i++){
     //pairnw ta data
     BF_GetBlock(file_handle , i , block);
-    void** data = BF_Block_GetData(block);
+    void* data = BF_Block_GetData(block);
     HeapFileIterator block_info;
 
     memcpy(&block_info , data, sizeof(block_info));
