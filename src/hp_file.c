@@ -135,35 +135,37 @@ HeapFileIterator HeapFile_CreateIterator(    int file_handle, HeapFileHeader* he
   BF_Block *block;
   BF_Block_Init(&block);
 
-  HeapFileIterator out;
   for(int i = 1; i <= header_info->lastblock; i++){
     //pairnw ta data
     BF_GetBlock(file_handle , i , block);
     void* data = BF_Block_GetData(block);
     HeapFileIterator block_info;
-
+    
     memcpy(&block_info , data, sizeof(block_info));
     int reccount = block_info.recordcount;
-
+    
     data+= sizeof(block_info);
-
+    
     Record* rec = data;
     
     for(int j = 0; j < reccount; j++){
       if(rec[j].id == id){
-        out.recordcount = &rec[j];
+        //out.recordcount = &rec[j];
+        printRecord(rec[j]);
+        
       }
     }
     BF_UnpinBlock(block);
   }
   BF_Block_Destroy(&block);
+  HeapFileIterator out;
   return out;
 }
 
 
 int HeapFile_GetNextRecord(    HeapFileIterator* heap_iterator, Record** record)
 {
-    * record=heap_iterator->recordcount;
+    * record = NULL;
     return 1;
 }
 
