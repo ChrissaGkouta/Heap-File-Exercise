@@ -165,7 +165,46 @@ HeapFileIterator HeapFile_CreateIterator(    int file_handle, HeapFileHeader* he
 
 int HeapFile_GetNextRecord(    HeapFileIterator* heap_iterator, Record** record)
 {
-    * record = NULL;
-    return 1;
+    BF_Block block;
+    BF_Block_Init(&block);
+
+    int total_blocks;
+    BF_GetBlockCounter(heap_iterator->file_handle, &total_blocks);
+
+    // Συνεχίζουμε από το block που μείναμε
+    for (int i = heap_iterator->current_block; i < total_blocks; i++) {
+        CALL_BF(BF_GetBlock(heap_iterator->file_handle, i, block));
+        void data = BF_Block_GetData(block);
+
+        HP_Block_Metadata block_meta;
+        memcpy(&block_meta, data, sizeof(HP_Block_Metadata));
+
+        // Ο δείκτης πηγαίνει μετά τα metadata, εκεί που αρχίζουν οι εγγραφές
+        Record* records = (Record*)(data + sizeof(HP_Block_Metadata));
+
+        // Ψάχνουμε τις εγγραφές του block
+        for (int j = heap_iterator->current_record_index; j < block_meta.recordcount; j++) {
+
+         if (records[j].id == heap_iterator->search_id) {
+                *record = &records[j]; 
+
+                // Αποθηκεύουμε τη θέση μας για την επόμενη κλήση
+                heap_iterator->current_block = i;
+                heap_iterator->current_record_index = j + 1; // Συνεχίζουμε από την επόμενη
+
+                BF_UnpinBlock(block);
+                BF_Block_Destroy(&block);
+                return 1; 
+            }
+        }
+
+        // Τελείωσε το τρέχον block, πάμε στο επόμενο
+        heap_iterator->current_block = i + 1;
+        heap_iterator->current_record_index = 0; // Reset για το νέο block
+        BF_UnpinBlock(block);
+    }
+
+    BF_Block_Destroy(&block);
+    return 0; 
 }
 
